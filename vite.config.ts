@@ -18,6 +18,17 @@ const rootDir = resolve(__dirname);
 const certsDir = path.join(rootDir, 'certs');
 const ENV_LOCAL_FILE_PATH = path.join(rootDir, '.env.local');
 const LANG_PACK_LOCAL_FILE_PATH = path.join(rootDir, 'src', 'langPackLocalVersion.ts');
+const normalizeBasePath = (basePath: string | undefined) => {
+  if(!basePath) {
+    return '';
+  }
+
+  const normalizedPath = basePath.trim().replace(/^\/+|\/+$/g, '');
+  return normalizedPath ? `/${normalizedPath}/` : '';
+};
+const PUBLIC_BASE_PATH = normalizeBasePath(process.env.VITE_PUBLIC_BASE_PATH);
+const SITE_ORIGIN = (process.env.VITE_SITE_ORIGIN || 'https://web.telegram.org').replace(/\/+$/, '');
+const SITE_URL = `${SITE_ORIGIN}${PUBLIC_BASE_PATH || '/'}`;
 
 const isDEV = process.env.NODE_ENV === 'development';
 if(!existsSync(LANG_PACK_LOCAL_FILE_PATH)) {
@@ -34,10 +45,10 @@ if(isDEV) {
 
 const handlebarsPlugin = handlebars({
   context: {
-    title: 'Telegram Web',
-    description: 'Telegram is a cloud-based mobile and desktop messaging app with a focus on security and speed.',
-    url: 'https://web.telegram.org/k/',
-    origin: 'https://web.telegram.org/'
+    title: process.env.VITE_SITE_TITLE || 'Telegram Web',
+    description: process.env.VITE_SITE_DESCRIPTION || 'Telegram is a cloud-based mobile and desktop messaging app with a focus on security and speed.',
+    url: SITE_URL,
+    origin: SITE_URL
   }
 });
 
@@ -148,7 +159,7 @@ export default defineConfig({
     setupFiles: ['./src/tests/setup.ts']
   },
   server: serverOptions,
-  base: '',
+  base: PUBLIC_BASE_PATH,
   build: {
     target: 'es2020',
     sourcemap: true,

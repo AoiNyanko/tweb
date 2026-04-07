@@ -35,9 +35,52 @@ const TEST_SUFFIX = Modes.test ? '_test' : '';
 const PREMIUM_SUFFIX = '_premium';
 const RETRY_TIMEOUT_CLIENT = 3000;
 const RETRY_TIMEOUT_DOWNLOAD = 3000;
+const PROXY_PATH_TRIM_RE = /^\/+|\/+$/g;
+
+function normalizeProxyPath(path: string | undefined) {
+  if(!path) {
+    return '';
+  }
+
+  const normalizedPath = path.trim().replace(PROXY_PATH_TRIM_RE, '');
+  return normalizedPath ? `/${normalizedPath}` : '';
+}
+
+function getMtprotoProxyBase() {
+  const proxyPath = normalizeProxyPath(import.meta.env.VITE_MTPROTO_PROXY_PATH);
+  if(!proxyPath) {
+    return;
+  }
+
+  const proxyOrigin = (import.meta.env.VITE_MTPROTO_PROXY_ORIGIN || location.origin).replace(/\/+$/, '');
+  return `${proxyOrigin}${proxyPath}`;
+}
+
+function constructMtprotoProxyUrl(node: string, apiPath: string, isWebSocket: boolean) {
+  const proxyBase = getMtprotoProxyBase();
+  if(!proxyBase) {
+    return;
+  }
+
+  const url = new URL(`${proxyBase}/${node}/${apiPath}`);
+  if(isWebSocket) {
+    url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+  }
+
+  return url.toString();
+}
 
 export function getTelegramConnectionSuffix(connectionType: ConnectionType) {
   return connectionType === 'client' ? '' : '-1';
+}
+
+export function getTelegramHttpNode(dcId: DcId, connectionType: ConnectionType) {
+  const suffix = getTelegramConnectionSuffix(connectionType);
+  return ['pluto', 'venus', 'aurora', 'vesta', 'flora'][dcId - 1] + suffix;
+}
+
+export function getTelegramWebSocketNode(dcId: DcId, connectionType: ConnectionType) {
+  return `${App.suffix.toLowerCase()}ws${dcId}${getTelegramConnectionSuffix(connectionType)}`;
 }
 
 export function constructTelegramWebSocketUrl(dcId: DcId, connectionType: ConnectionType, premium?: boolean) {
@@ -45,15 +88,21 @@ export function constructTelegramWebSocketUrl(dcId: DcId, connectionType: Connec
     return;
   }
 
-  const suffix = getTelegramConnectionSuffix(connectionType);
+  // const suffix = getTelegramConnectionSuffix(connectionType);
   const path = connectionType !== 'client' ? 'apiws' + TEST_SUFFIX + (premium ? PREMIUM_SUFFIX : '') : ('apiws' + TEST_SUFFIX);
-  const chosenServer = `wss://${App.suffix.toLowerCase()}ws${dcId}${suffix}.web.telegram.org/${path}`;
+  // const chosenServer = `wss://${App.suffix.toLowerCase()}ws${dcId}${suffix}.web.telegram.org/${path}`;
+  const proxyUrl = constructMtprotoProxyUrl(getTelegramWebSocketNode(dcId, connectionType), path, true);
+  if(proxyUrl) {
+    return proxyUrl;
+  }
+
+  const chosenServer = `wss://${getTelegramWebSocketNode(dcId, connectionType)}.web.telegram.org/${path}`;
 
   return chosenServer;
 }
 
 export class DcConfigurator {
-  private sslSubdomains = ['pluto', 'venus', 'aurora', 'vesta', 'flora'];
+  // private sslSubdomains = ['pluto', 'venus', 'aurora', 'vesta', 'flora'];
 
   private dcOptions = Modes.test ?
     [
@@ -98,10 +147,12 @@ export class DcConfigurator {
 
     let chosenServer: string;
     if(Modes.ssl || !Modes.http) {
-      const suffix = getTelegramConnectionSuffix(connectionType);
-      const subdomain = this.sslSubdomains[dcId - 1] + suffix;
+      // const suffix = getTelegramConnectionSuffix(connectionType);
+      // const subdomain = this.sslSubdomains[dcId - 1] + suffix;
       const path = Modes.test ? 'apiw_test1' : 'apiw1';
-      chosenServer = 'https://' + subdomain + '.web.telegram.org/' + path;
+      // chosenServer = 'https://' + subdomain + '.web.telegram.org/' + path;
+      const proxyUrl = constructMtprotoProxyUrl(getTelegramHttpNode(dcId, connectionType), path, false);
+      chosenServer = proxyUrl || ('https://' + getTelegramHttpNode(dcId, connectionType) + '.web.telegram.org/' + path);
     } else {
       for(const dcOption of this.dcOptions) {
         if(dcOption.id === dcId) {

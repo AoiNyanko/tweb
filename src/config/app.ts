@@ -12,10 +12,14 @@
 import type {TrueDcId} from '@types';
 import langPackLocalVersion from '@/langPackLocalVersion';
 
-export const MAIN_DOMAINS = ['web.telegram.org', 'webk.telegram.org', 'tclient.irislc.net', 'aoinyanko.github.io'];
+export const MAIN_DOMAINS = ['web.telegram.org', 'webk.telegram.org', 'tclient.irislc.net'];
+export const SUB_DOMAINS = ['aoinyanko.github.io'];
+export const SUB_DOMAINS_DIRECT_DCCONN = true;
 export const DEFAULT_BACKGROUND_SLUG = 'pattern';
 
 const threads = Math.min(4, navigator.hardwareConcurrency ?? 4);
+const isMainDomain = MAIN_DOMAINS.includes(location.hostname);
+const isSubDomain = SUB_DOMAINS.includes(location.hostname);
 
 const App = {
   id: +import.meta.env.VITE_API_ID,
@@ -28,9 +32,10 @@ const App = {
   langPackLocalVersion: langPackLocalVersion,
   langPack: 'webk',
   langPackCode: 'en',
-  domains: MAIN_DOMAINS,
+  domains: [...MAIN_DOMAINS, ...SUB_DOMAINS],
   baseDcId: 2 as TrueDcId,
-  isMainDomain: MAIN_DOMAINS.includes(location.hostname),
+  isMainDomain,
+  isSubDomain,
   suffix: 'K',
   threads,
   lottieWorkers: threads,
@@ -41,6 +46,10 @@ const App = {
 if(App.isMainDomain) { // use Webogram credentials then
   App.id = 26972737;
   App.hash = 'b8c125567f3cd96307194bc82f764cfa';
+  App.pushServerKey = 'BHEbKOXt-GD8MCTTYiAYT3I5R4MB0epIE7Tbbymj1uR0xJRE_7m27eXTVAC_P19TeZnO9413lRz-0oZ87JRPKPM';
+} else if(App.isSubDomain) {
+  App.id = 2496;
+  App.hash = '8da85b0d5bfe62527e5b244c209159c3';
   App.pushServerKey = 'BHEbKOXt-GD8MCTTYiAYT3I5R4MB0epIE7Tbbymj1uR0xJRE_7m27eXTVAC_P19TeZnO9413lRz-0oZ87JRPKPM';
 }
 

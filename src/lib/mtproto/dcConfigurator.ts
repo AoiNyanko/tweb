@@ -11,7 +11,7 @@
 
 import MTTransport, {MTConnectionConstructable} from '@lib/mtproto/transports/transport';
 import Modes from '@config/modes';
-import App from '@config/app';
+import App, {SUB_DOMAINS_DIRECT_DCCONN} from '@config/app';
 import indexOfAndSplice from '@helpers/array/indexOfAndSplice';
 import HTTP from '@lib/mtproto/transports/http';
 import Socket from '@lib/mtproto/transports/websocket';
@@ -46,7 +46,15 @@ function normalizeProxyPath(path: string | undefined) {
   return normalizedPath ? `/${normalizedPath}` : '';
 }
 
+function shouldUseMainDomainMtprotoProxy() {
+  return App.isMainDomain || (App.isSubDomain && !SUB_DOMAINS_DIRECT_DCCONN);
+}
+
 function getMtprotoProxyBase() {
+  if(!shouldUseMainDomainMtprotoProxy()) {
+    return;
+  }
+
   const proxyPath = normalizeProxyPath(import.meta.env.VITE_MTPROTO_PROXY_PATH);
   if(!proxyPath) {
     return;

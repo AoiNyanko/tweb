@@ -249,6 +249,10 @@ namespace I18n {
       langPack1.strings = strings;
       langPack1.countries = countries;
       langPack1.localVersion = App.langPackLocalVersion;
+      if(langPack1.lang_code && langPack1.lang_code !== lastRequestedLangCode) {
+        setLangCode(langPack1.lang_code);
+      }
+
       return saveLangPack(langPack1, true);
     });
   }

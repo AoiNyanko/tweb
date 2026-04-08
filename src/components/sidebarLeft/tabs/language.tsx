@@ -22,6 +22,24 @@ import SettingSection from '@components/settingSection';
 import {SliderSuperTab} from '@components/slider'
 import {useAppSettings} from '@stores/appSettings';
 
+const HARDCODED_WEB_LANGUAGES = [
+  {
+    lang_code: 'zh-hans-beta',
+    name: 'Chinese (Simplified)',
+    native_name: '简体中文'
+  },
+  {
+    lang_code: 'zh-hant-beta',
+    name: 'Chinese (Traditional)',
+    native_name: '繁體中文'
+  },
+  {
+    lang_code: 'meowcn',
+    name: 'Chinese (MeowCN)',
+    native_name: '喵体中文'
+  }
+] as LangPackLanguage[];
+
 export default class AppLanguageTab extends SliderSuperTab {
   public static getInitArgs() {
     return {
@@ -125,10 +143,16 @@ export default class AppLanguageTab extends SliderSuperTab {
       p.languages2
     ]).then(([languages1, languages2]) => {
       const rendered: Set<string> = new Set();
-      const webLangCodes = languages1.map((language) => language.lang_code);
+      const webLanguages = languages1.slice();
+      HARDCODED_WEB_LANGUAGES.forEach((language) => {
+        if(!webLanguages.find((existingLanguage) => existingLanguage.lang_code === language.lang_code)) {
+          webLanguages.push(language);
+        }
+      });
+      const webLangCodes = webLanguages.map((language) => language.lang_code);
 
       const random = randomLong();
-      languages1.concat(languages2).forEach((language) => {
+      webLanguages.concat(languages2).forEach((language) => {
         if(rendered.has(language.lang_code)) return;
         rendered.add(language.lang_code);
 

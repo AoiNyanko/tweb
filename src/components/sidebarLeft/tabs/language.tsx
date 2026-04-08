@@ -39,6 +39,10 @@ const HARDCODED_WEB_LANGUAGES = [
     native_name: '喵体中文'
   }
 ] as LangPackLanguage[];
+const LANGUAGE_CODE_ALIASES: Record<string, string> = {
+  'zh-hans-raw': 'zh-hans-beta',
+  'zh-hant-raw': 'zh-hant-beta'
+};
 
 export default class AppLanguageTab extends SliderSuperTab {
   public static getInitArgs() {
@@ -173,7 +177,7 @@ export default class AppLanguageTab extends SliderSuperTab {
       });
 
       I18n.getCacheLangPackAndApply().then((langPack) => {
-        const row = radioRows.get(langPack.lang_code);
+        const row = radioRows.get(LANGUAGE_CODE_ALIASES[langPack.lang_code] || langPack.lang_code);
         if(!row) {
           console.error('no row', row, langPack);
           return;

@@ -81,6 +81,17 @@ export type FormatterArguments = FormatterArgument[];
 export const UNSUPPORTED_LANG_PACK_KEY: LangPackKey = IS_MOBILE ? 'Message.Unsupported.Mobile' : 'Message.Unsupported.Desktop';
 
 namespace I18n {
+  const LANGUAGE_CODE_ALIASES: Record<string, string> = {
+    'zh-hans-raw': 'zh-hans-beta',
+    'zh-hant-raw': 'zh-hant-beta'
+  };
+  const INTL_LANGUAGE_CODE_ALIASES: Record<string, string> = {
+    'zh-hans-beta': 'zh-Hans',
+    'zh-hans-raw': 'zh-Hans',
+    'zh-hant-beta': 'zh-Hant',
+    'zh-hant-raw': 'zh-Hant'
+  };
+
   export const strings: Map<LangPackKey, LangPackString> = new Map();
   export const countriesList: HelpCountry[] = [];
   let pluralRules: Intl.PluralRules;
@@ -104,9 +115,18 @@ namespace I18n {
     isRTL = rtl;
   }
 
+  function normalizeDisplayLangCode(langCode: string) {
+    return LANGUAGE_CODE_ALIASES[langCode] || langCode;
+  }
+
+  function normalizeIntlLangCode(langCode: string) {
+    return INTL_LANGUAGE_CODE_ALIASES[langCode] || langCode;
+  }
+
   function setLangCode(langCode: string) {
-    lastRequestedLangCode = langCode;
-    lastRequestedNormalizedLangCode = langCode.split('-')[0];
+    const normalizedLangCode = normalizeDisplayLangCode(langCode);
+    lastRequestedLangCode = normalizedLangCode;
+    lastRequestedNormalizedLangCode = normalizeIntlLangCode(normalizedLangCode);
     setLangCodeNormalized(lastRequestedNormalizedLangCode.split('-')[0] as any);
   }
 
@@ -278,8 +298,9 @@ namespace I18n {
   })();
 
   export function applyLangPack(langPack: LangPackDifference) {
+    const normalizedLangCode = normalizeDisplayLangCode(langPack.lang_code);
     const currentLangCode = lastRequestedLangCode;
-    if(langPack.lang_code !== currentLangCode) {
+    if(normalizedLangCode !== currentLangCode) {
       return;
     }
 
@@ -291,10 +312,10 @@ namespace I18n {
     }
 
     try {
-      pluralRules = new Intl.PluralRules(langPack.lang_code);
+      pluralRules = new Intl.PluralRules(normalizeIntlLangCode(langPack.lang_code));
     } catch(err) {
       console.error('pluralRules error', err);
-      pluralRules = new Intl.PluralRules(langPack.lang_code.split('-', 1)[0]);
+      pluralRules = new Intl.PluralRules(normalizeIntlLangCode(langPack.lang_code).split('-', 1)[0]);
     }
 
     strings.clear();

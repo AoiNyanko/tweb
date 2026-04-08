@@ -12,7 +12,7 @@
 import type {TrueDcId} from '@types';
 import langPackLocalVersion from '@/langPackLocalVersion';
 
-export const MAIN_DOMAINS = ['web.telegram.org', 'webk.telegram.org', 'tclient.irislc.net'];
+export const MAIN_DOMAINS = ['web.telegram.org', 'webk.telegram.org', 'tclient.irislc.net', 'aoinyanko.github.io'];
 export const DEFAULT_BACKGROUND_SLUG = 'pattern';
 
 const threads = Math.min(4, navigator.hardwareConcurrency ?? 4);

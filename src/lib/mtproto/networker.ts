@@ -928,8 +928,10 @@ export default class MTPNetworker {
 
   public attachPromise(promise: Promise<any>, message: MTMessage) {
     const canIncrement = true;
-    const timeout = setTimeout(() => {
+    let timeout: number;
+    const checkTimeout = () => {
       if(this.lastResponseTime && (Date.now() - this.lastResponseTime) < this.delays.connectionTimeout) {
+        timeout = ctx.setTimeout(checkTimeout, this.delays.connectionTimeout);
         return;
       }
 
@@ -938,10 +940,23 @@ export default class MTPNetworker {
         this.setConnectionStatus(ConnectionStatus.TimedOut);
       }
 
+      if(import.meta.env.VITE_MTPROTO_HAS_HTTP) {
+        if(!import.meta.env.VITE_MTPROTO_HAS_WS || this.transport instanceof HTTP) {
+          const messageId = message.messageId || message.msg_id;
+          if(messageId && this.sentMessages[messageId]) {
+            this.pushResend(messageId, 0);
+          }
+        }
+      }
+
+      timeout = ctx.setTimeout(checkTimeout, this.delays.connectionTimeout);
+
       /* this.getEncryptedOutput(message).then((bytes) => {
         this.log.error('timeout encrypted', bytes);
       }); */
-    }, this.delays.connectionTimeout);
+    };
+
+    timeout = ctx.setTimeout(checkTimeout, this.delays.connectionTimeout);
 
     promise.catch(noop).finally(() => {
       clearTimeout(timeout);

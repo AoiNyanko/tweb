@@ -43,6 +43,7 @@ jobs:
         run: |
           npm install pnpm -g
           export SHELL='/usr/bin/bash'
+          hash -r
           pnpm setup
           pnpm install --frozen-lockfile
 

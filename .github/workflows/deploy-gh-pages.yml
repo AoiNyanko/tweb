@@ -43,12 +43,14 @@ jobs:
         run: |
           npm install pnpm -g
           export SHELL='/usr/bin/bash'
-          hash -r
+          export "PATH=/home/runner/.local/share/pnpm:$PATH"
           pnpm setup
           pnpm install --frozen-lockfile
 
       - name: Build site
-        run: pnpm build
+        run: |
+          export "PATH=/home/runner/.local/share/pnpm:$PATH"
+          pnpm build
 
       - name: Prepare Pages artifact
         run: |
